@@ -1,15 +1,9 @@
----
-title: "Assignment1"
-output: 
-  html_document: default
-  md_document: default
-
-
----
+Assignment1
+================
 
 # Q1: Loading and preprocessing the data
 
-```{r echo=TRUE}
+``` r
 suppressMessages(library(lubridate))
 suppressMessages(library(tidyr))
 suppressMessages(library(dplyr))
@@ -24,8 +18,14 @@ dat1$date <- ymd(dat1$date)
 str(dat1)
 ```
 
+    ## 'data.frame':    17568 obs. of  3 variables:
+    ##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+    ##  $ date    : Date, format: "2012-10-01" "2012-10-01" ...
+    ##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+
 # Q2: What is mean total number of steps taken per day?
-```{r}
+
+``` r
 #Calculate the total number of steps taken per day
 dat1_sum_by_day<- dat1 %>% 
     group_by(date) %>% 
@@ -34,18 +34,22 @@ dat1_sum_by_day<- dat1 %>%
 
 # Make a histogram of the total number of steps taken each day
 hist(dat1_sum_by_day$sum, main = "Histogram of total number of steps taken per day", xlab = "Total number of steps taken per day")
+```
 
+![](assignment1_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+
+``` r
 # Calculate and report the mean and median of the total number of steps taken per day
 mean <- round(mean(dat1_sum_by_day$sum, na.rm= T))
 median <- median(dat1_sum_by_day$sum)
 ```
-Mean total number of steps taken per day is `r mean`.  
-Median total number of steps taken per day is `r median`.
 
+Mean total number of steps taken per day is 10766.  
+Median total number of steps taken per day is 10765.
 
 # Q3: What is the average daily activity pattern?
 
-```{r}
+``` r
 # Prepare the data
 dat1_daily_pattern <- dat1 %>% 
     group_by(interval) %>% 
@@ -56,18 +60,28 @@ dat1_daily_pattern <- dat1 %>%
 dat1_daily_pattern %>% ggplot(aes(y=mean, x= interval)) +
     geom_line()+
     scale_x_continuous(breaks = seq(0,2355,100))
+```
 
+![](assignment1_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+``` r
 # Find the maximum 5-minute interval
 max<- dat1_daily_pattern[which(dat1_daily_pattern$mean==max(dat1_daily_pattern$mean)),1]
-
 ```
-The `r max`th 5-minute interval contains the maximum number of steps.  
+
+The 835th 5-minute interval contains the maximum number of steps.
 
 # Q4: Imputing missing values
-```{r}
+
+``` r
 # Calculate and report the total number of missing values in the dataset
 apply(is.na(dat1), 2,sum )
+```
 
+    ##    steps     date interval 
+    ##     2304        0        0
+
+``` r
 dat1_imputed <- dat1
 
 # Filling in all of the missing values in the dataset
@@ -78,7 +92,12 @@ for ( i in 1:nrow(dat1_imputed)) {
     }
 }
 apply(is.na(dat1_imputed), 2,sum )
+```
 
+    ##    steps     date interval 
+    ##        0        0        0
+
+``` r
 # Make a histogram of the total number of steps taken each day 
 dat1_imputed_sum_by_day<- dat1 %>% 
     group_by(date) %>% 
@@ -86,18 +105,22 @@ dat1_imputed_sum_by_day<- dat1 %>%
     summarise(sum= sum(steps, na.rm=TRUE))
 
 hist(dat1_imputed_sum_by_day$sum, main = "Histogram of imputed total number of steps taken per day", xlab = "Imputed total number of steps taken per day")
+```
 
+![](assignment1_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+``` r
 mean_imputed <- round(mean(dat1_imputed_sum_by_day$sum),0)
 median_imputed <- median(dat1_imputed_sum_by_day$sum)
-
 ```
-The total number of missing values in the dataset is 2304.
-Mean total number of steps taken per day is `r mean_imputed`.  
-Median total number of steps taken per day is `r median_imputed`.
 
+The total number of missing values in the dataset is 2304. Mean total
+number of steps taken per day is 10766.  
+Median total number of steps taken per day is 10765.
 
 # Q5: Are there differences in activity patterns between weekdays and weekends?
-```{r}
+
+``` r
 # Create a new factor variable in the dataset with two levels
 dat1_imputed<- dat1_imputed %>% 
     mutate(weekday=weekdays(date,abbreviate=TRUE)) %>%
@@ -110,13 +133,16 @@ dat1_imputed<- dat1_imputed %>%
 dat1_imputed_daily_pattern <- dat1_imputed %>% 
     group_by(interval,weekday_factor) %>% 
     summarise(mean=mean(steps))
+```
 
+    ## `summarise()` has grouped output by 'interval'. You can override using the `.groups` argument.
+
+``` r
 dat1_imputed_daily_pattern %>% ggplot(aes(y=mean, x= interval)) +
     geom_line(aes(col=weekday_factor))+
     facet_grid(weekday_factor~.)+
     scale_x_continuous(breaks = seq(0,2355,100))+
     theme_bw()
-    
-
 ```
 
+![](assignment1_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
