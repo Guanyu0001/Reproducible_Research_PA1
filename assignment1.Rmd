@@ -1,7 +1,7 @@
-```
+---
 title: "Assignment1"
-output: github_hmtl
-```
+output: html_document
+---
 
 # Q1: Loading and preprocessing the data
 
