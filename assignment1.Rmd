@@ -1,0 +1,118 @@
+```
+title: "Assignment1"
+output: github_hmtl
+```
+
+# Q1: Loading and preprocessing the data
+
+```{r echo=TRUE}
+suppressMessages(library(lubridate))
+suppressMessages(library(tidyr))
+suppressMessages(library(dplyr))
+suppressMessages(library(ggplot2))
+options(scipen=999)
+
+# Load the data
+dat1<- read.csv("activity.csv")
+
+# Process/transform the data
+dat1$date <- ymd(dat1$date)
+str(dat1)
+```
+
+# Q2: What is mean total number of steps taken per day?
+```{r}
+#Calculate the total number of steps taken per day
+dat1_sum_by_day<- dat1 %>% 
+    group_by(date) %>% 
+    drop_na() %>% 
+    summarise(sum= sum(steps, na.rm=TRUE))
+
+# Make a histogram of the total number of steps taken each day
+hist(dat1_sum_by_day$sum, main = "Histogram of total number of steps taken per day", xlab = "Total number of steps taken per day")
+
+# Calculate and report the mean and median of the total number of steps taken per day
+mean <- round(mean(dat1_sum_by_day$sum, na.rm= T))
+median <- median(dat1_sum_by_day$sum)
+```
+Mean total number of steps taken per day is `r mean`.  
+Median total number of steps taken per day is `r median`.
+
+
+# Q3: What is the average daily activity pattern?
+
+```{r}
+# Prepare the data
+dat1_daily_pattern <- dat1 %>% 
+    group_by(interval) %>% 
+    drop_na() %>% 
+    summarise(mean=mean(steps))
+
+# Make a time series plot
+dat1_daily_pattern %>% ggplot(aes(y=mean, x= interval)) +
+    geom_line()+
+    scale_x_continuous(breaks = seq(0,2355,100))
+
+# Find the maximum 5-minute interval
+max<- dat1_daily_pattern[which(dat1_daily_pattern$mean==max(dat1_daily_pattern$mean)),1]
+
+```
+The `r max`th 5-minute interval contains the maximum number of steps.  
+
+# Q4: Imputing missing values
+```{r}
+# Calculate and report the total number of missing values in the dataset
+apply(is.na(dat1), 2,sum )
+
+dat1_imputed <- dat1
+
+# Filling in all of the missing values in the dataset
+for ( i in 1:nrow(dat1_imputed)) {
+    if (is.na(dat1_imputed$steps[i])){
+        which_row <- which(dat1_daily_pattern$interval==dat1_imputed$interval[i])
+        dat1_imputed$steps[i] <- as.numeric(dat1_daily_pattern[which_row,"mean"])
+    }
+}
+apply(is.na(dat1_imputed), 2,sum )
+
+# Make a histogram of the total number of steps taken each day 
+dat1_imputed_sum_by_day<- dat1 %>% 
+    group_by(date) %>% 
+    drop_na() %>% 
+    summarise(sum= sum(steps, na.rm=TRUE))
+
+hist(dat1_imputed_sum_by_day$sum, main = "Histogram of imputed total number of steps taken per day", xlab = "Imputed total number of steps taken per day")
+
+mean_imputed <- round(mean(dat1_imputed_sum_by_day$sum),0)
+median_imputed <- median(dat1_imputed_sum_by_day$sum)
+
+```
+The total number of missing values in the dataset is 2304.
+Mean total number of steps taken per day is `r mean_imputed`.  
+Median total number of steps taken per day is `r median_imputed`.
+
+
+# Q5: Are there differences in activity patterns between weekdays and weekends?
+```{r}
+# Create a new factor variable in the dataset with two levels
+dat1_imputed<- dat1_imputed %>% 
+    mutate(weekday=weekdays(date,abbreviate=TRUE)) %>%
+    mutate(weekday_factor=case_when(
+        weekday %in% c("Sun","Sat") ~ "weekend",
+        TRUE ~ "weekday")
+    )
+
+# Make a panel plot containing a time series plot
+dat1_imputed_daily_pattern <- dat1_imputed %>% 
+    group_by(interval,weekday_factor) %>% 
+    summarise(mean=mean(steps))
+
+dat1_imputed_daily_pattern %>% ggplot(aes(y=mean, x= interval)) +
+    geom_line(aes(col=weekday_factor))+
+    facet_grid(weekday_factor~.)+
+    scale_x_continuous(breaks = seq(0,2355,100))+
+    theme_bw()
+    
+
+```
+
