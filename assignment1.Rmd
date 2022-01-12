@@ -1,8 +1,6 @@
 ---
 title: "Assignment1"
 output: 
-  html_document: default
-  md_document: default
   github_document: default
 
 
